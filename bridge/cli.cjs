@@ -33071,6 +33071,7 @@ async function startTeamV2(config2) {
       status: "pending",
       owner: null,
       result: null,
+      ...config2.tasks[i].role ? { role: config2.tasks[i].role } : {},
       ...config2.tasks[i].delegation ? { delegation: config2.tasks[i].delegation } : {},
       created_at: (/* @__PURE__ */ new Date()).toISOString()
     }, null, 2), "utf-8");
@@ -33106,7 +33107,8 @@ async function startTeamV2(config2) {
     const allocationTasks = unownedTaskIndices.map((idx) => ({
       id: String(idx),
       subject: config2.tasks[idx].subject,
-      description: config2.tasks[idx].description
+      description: config2.tasks[idx].description,
+      ...config2.tasks[idx].role ? { role: config2.tasks[idx].role } : {}
     }));
     const allocationWorkers = workerNames.map((name, i) => ({
       name,
