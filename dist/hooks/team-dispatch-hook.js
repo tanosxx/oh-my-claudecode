@@ -296,17 +296,6 @@ function paneLooksReady(captured) {
         return true;
     return false;
 }
-function resolveWorkerCliForRequest(request, config) {
-    const workers = Array.isArray(config.workers) ? config.workers : [];
-    const idx = Number.isFinite(request.worker_index) ? Number(request.worker_index) : null;
-    if (idx !== null) {
-        const worker = workers.find((c) => Number(c.index) === idx);
-        const workerCli = safeString(worker?.worker_cli).trim().toLowerCase();
-        if (workerCli === 'claude')
-            return 'claude';
-    }
-    return 'codex';
-}
 async function runProcess(cmd, args, timeoutMs) {
     const { execFile } = await import('child_process');
     const { promisify } = await import('util');
@@ -326,7 +315,12 @@ async function defaultInjector(request, config, _cwd) {
         }
     }
     catch { /* best effort */ }
-    const submitKeyPresses = resolveWorkerCliForRequest(request, config) === 'claude' ? 1 : 2;
+    // Claude Code v2.1.x sometimes swallows a single Enter during TUI state
+    // transitions (input-handler bind race) — same root cause documented at
+    // runtime-v2.ts:788-793 for the startup path. Send 2 Enters here too so
+    // the dispatch path does not stall with the trigger text typed but never
+    // submitted.
+    const submitKeyPresses = 2;
     const attemptCountAtStart = Number.isFinite(request.attempt_count) ? Math.max(0, Math.floor(request.attempt_count)) : 0;
     let preCaptureHasTrigger = false;
     if (attemptCountAtStart >= 1) {
